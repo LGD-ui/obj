@@ -289,7 +289,7 @@
                   that.okLength = i;
                   var id = that.$route.query.id;
                   var type = that.type;
-                  var parts_id = that.arm_stepsArr[i].id;
+                  var parts_id = that.barcodeObj.id;
                   var parts_number = that.barcode_val;
                   console.log(id,type,parts_id,parts_number)
                   that.assembleParst(id,type,parts_id,parts_number)
@@ -310,7 +310,7 @@
                   that.okLength = i;
                   var id = that.$route.query.id;
                   var type = that.type;
-                  var parts_id = that.arm_stepsArr[i].id;
+                  var parts_id = that.barcodeObj.id;
                   var parts_number = that.barcode_val;
                   console.log(id,type,parts_id,parts_number)
                   that.assembleParst(id,type,parts_id,parts_number)
