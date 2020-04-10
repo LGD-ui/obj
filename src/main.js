@@ -13,19 +13,42 @@ import VueAxios from 'vue-axios'
 import VideoPlayer from 'vue-video-player'
 import 'vue-video-player/src/custom-theme.css'
 import 'video.js/dist/video-js.css'
+import ECharts from 'vue-echarts'
+import dataV from '@jiaminghi/data-view'
+import VueLazyload from 'vue-lazyload'
+
+
+Vue.component('v-chart', ECharts)
 
 Vue.config.productionTip = false
 
 Vue.use(Element)
 Vue.use(ViewUI)
-Vue.use(VueAxios,axios)
+Vue.use(VueAxios, axios)
 Vue.use(VideoPlayer)
+// Vue.use(ECharts)
+Vue.use(dataV)
+Vue.use(VueLazyload)
 
+Vue.prototype.ECharts = ECharts
 /* eslint-disable no-new */
+
+/* vue有两种形式的代码 compiler（模板）模式和runtime模式（运行时） */
+
+/* // compiler
 new Vue({
-  el: '#app',
+	el: '#app',
+	router,
+	store,
+	components: {
+		App
+	},
+	template: '<App/>'
+}) */
+
+//runtime
+new Vue({
   router,
   store,
-  components: { App },
-  template: '<App/>'
-})
+  render: h => h(App)
+}).$mount("#app")

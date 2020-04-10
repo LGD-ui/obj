@@ -1,62 +1,64 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 
-import Login from '@/components/login/Login'
-import App from '@/App'
-import Content from '@/components/content/Content'
-import Submit from '@/components/content/Submit'
-import List from '@/components/content/List'
-import CreateModular from '@/components/content/CreateModular'
-import Batch from '@/components/content/Batch'
-import Out from '@/components/content/Out'
-import Breakage from '@/components/content/Breakage'
-import BreakList from '@/components/content/BreakList'
-import Scan_enter from '@/components/content/Scan_enter'
+import Watermark  from '../components/common/watermark.js'
+
+import assembly from './assembly.js'
+import staging from './staging.js'
+import supply from './supply.js'
+
 Vue.use(Router)
 
-export default new Router({
-  mode: 'history',
-  routes: [{
-      path: '/login',
-      name: 'App',
-      component: App
-    },{
-      path: '/content',
-      name: 'Content',
-      component: Content
-    },{
-      path: '/submit',
-      name: 'Submit',
-      component: Submit
-    },{
-      path: '/list',
-      name: 'List',
-      component: List
-    },{
-      path: '/createmodular',
-      name: 'CreateModular',
-      component: CreateModular
-    },{
-      path: '/batch',
-      name: 'Batch',
-      component: Batch
-    },{
-      path: '/out',
-      name: 'Out',
-      component: Out
-    },{
-      path: '/breakage',
-      name: 'Breakage',
-      component: Breakage
-    },{
-      path: '/breakList',
-      name: 'BreakList',
-      component: BreakList
-    },{
-      path: '/scan_enter',
-      name: 'Scan_enter',
-      component: Scan_enter
-    }
+const routes = [
+	{
+		path: '/',
+		name: 'Login',
+		component: () => import('@/components/login/Login')
+	}, {
+		path: '/login',
+		name: 'Login',
+		component: () => import('@/components/login/Login')
+	}, {
+		path: '/echartspage',
+		name: 'EchartsPage',
+		component: () => import('@/components/content/EchartsPage')
+	},
+	...assembly,
+	...staging,
+	...supply,
+]
 
-  ]
+const router = new Router({
+	mode: 'history',
+	routes
 })
+
+router.beforeEach((to, from, next) => {
+	// console.log(to.fullPath, to.fullPath.startsWith("/login"))
+	if (to.fullPath != '/login') {
+		let token = sessionStorage.getItem('token');
+		let user = sessionStorage.getItem('user');
+		if (token && user) {
+			next();
+		} else {
+			sessionStorage.removeItem("token");
+			sessionStorage.removeItem("user");
+			next("/login");
+		}
+	} else {
+		next();
+	}
+});
+router.afterEach((to) => {
+	/* 路由发生变化修改页面title */
+	// if (to.meta.title) {
+	// 	changTitle(to.meta.title);
+	// }
+	let user = sessionStorage.getItem('user');
+	if (user) {
+		Watermark.set(user);
+	}
+	
+});
+
+export default router
