@@ -51,6 +51,11 @@
 							<el-form-item style="float: right;">
 								<el-link :underline="false" @click="axiosAssembleData('','',1);assemble_list_barcode_val=''">未装配</el-link>
 							</el-form-item>
+							<el-form-item style="float: right;">
+								<el-select v-model="wrenchname" :value-key="wrenchname" filterable placeholder="扳手列表" @change="selectChange">
+									<el-option v-for="item in wrenchArr" :key="item.id" :label="item.name" :value="item.ip"></el-option>
+								</el-select>
+							</el-form-item>
 						</el-form>
 					</p>
 					<el-dialog title="添加任务" :visible.sync="dialogFormVisible" width="40%" :show-close="false">
@@ -215,6 +220,8 @@
 		components: { Head },
 		data() {
 			return {
+				wrenchArr: [],
+				wrenchname: '',
 				cropperPhoto: {
 					dialog: false
 				},
@@ -279,6 +286,29 @@
 			})
 		},
 		methods: {
+			selectChange(value) {
+				sessionStorage.setItem("IP", this.wrenchname)
+			},
+			getwrenchList() {
+				var that = this;
+				var url = that.url;
+				var token = that.token;
+				that.axios({
+					method: 'GET',
+					url: url + '/api/v1/assemble/wrench-list',
+					headers: {
+						"content-type": "application/json",
+						'token': token
+					}
+				}).then(function(response) {
+					if (response && response.data && response.data.data && response.data.code == 200) {
+						var data = response.data.data.list;
+						that.wrenchArr = data;
+					}
+				}).catch(function(error) {
+					console.log(error);
+				});
+			},
 			
 			handleCurrentChange(val) {
 				if (val.status === 1) {
@@ -678,12 +708,17 @@
 			},
 		},
 		created() {
-			let that = this;
+			this.$store.state.ifThisPage = false;
+			if (sessionStorage.getItem("IP")) {
+				this.wrenchname = sessionStorage.getItem("IP");
+			}
+			this.axiosAssembleData();
+			this.getwrenchList();
+			if (this.$route.path == '/createmodular') {
+				// window.setInterval(that.axiosAssembleData, 20000);  //每隔20秒重新获取一次新数据
+			}
 			
-			that.$store.state.ifThisPage = false;
-
-			that.axiosAssembleData();
-			// window.setInterval(that.axiosAssembleData, 20000);  //每隔20秒重新获取一次新数据
+			
 		},
 
 	}

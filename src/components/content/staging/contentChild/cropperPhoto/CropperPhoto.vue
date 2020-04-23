@@ -1,38 +1,26 @@
 <template>
 	<div>
-		<el-dialog :visible.sync="centerDialogVisible" :show-close="false" :before-close="close" width="700px">
+		<el-dialog :visible.sync="centerDialogVisible.dialog" :show-close="false" :before-close="close" width="600px">
 			<div class="Record">
 				<article>
-					<section class="experiment">
+					<section class="experiment" v-show="!imgSrc">
 						<div id="videos-container"></div>
 						<el-progress :percentage="percentage" :show-text="false" :color="customColorMethod" v-if="startBtn.start"></el-progress>
 					</section>
 					<section class="experiment" v-show="imgSrc">
-						<canvas id="canvasCamera" width="320" height="240"></canvas>
+						<canvas id="canvasCamera" width="500" height="375"></canvas>
 					</section>
 					<section class="experimentbtn">
 						<!-- <el-button id="openCamera" :disabled="openBtn.disabled" @click="openCameraBtn">打开摄像头</el-button> -->
-						<el-button id="start-recording" :disabled="startBtn.disabled" @click="startRecording">开始录制</el-button>
-						<el-button id="start-recording" v-if="stopBtn" @click="stopRecording">停止录制</el-button>
-						<!-- <el-button id="save-recording" :disabled="saveBtn.disabled" @click="saveRecording">保存</el-button> -->
-						<el-button v-if="openBtn.disabled" @click="setRecording">{{startBtn.disabled?'抓拍':'拍照'}}</el-button>
+						<!-- <el-button id="start-recording" :disabled="startBtn.disabled" @click="startRecording">开始录制</el-button> -->
+						<!-- <el-button id="start-recording" v-if="stopBtn" @click="stopRecording">停止录制</el-button> -->
+						<el-button v-if="!imgSrc" @click="setRecording" icon="el-icon-camera-solid">拍照</el-button>
+						<el-button v-if="imgSrc" @click="clearsetRecording" icon="el-icon-refresh">重拍</el-button>
+						<el-button v-if="imgSrc" @click="saveRecording">保存</el-button>
 					</section>
 				</article>
 			</div>
 		</el-dialog>
-		<!-- <div class="hello">
-			<p>预览</p>
-			<div class="before"></div>
-			<el-button style="margin: 30px auto;" type="error" @click="sureSava">裁剪</el-button>
-			<div class="container">
-				<div class="img-container">
-					<img src="../../../assets/110420cf.png" ref="image" alt=""> 
-				</div>
-				<div class="afterCropper">
-					<img :src="afterImg" alt="">
-				</div>
-			</div>
-		</div> -->
 	</div>
 	
 </template>
@@ -63,7 +51,7 @@
 				startInterval: '',
 				imgSrc: '',
 				imageFiles: {},
-				filelist: {},
+				fileList: {},
 				percentage: 0,
 				
 				myCropper: null,
@@ -86,16 +74,9 @@
 			// this.init()
 			// this.openCameraBtn();
 		},
-		watch: {
-			centerDialogVisible() {
-				setTimeout(() => {
-					this.openCameraBtn()
-				}, 100)
-			}
-		},
 		methods: {
 			
-			customColorMethod(percentage) {
+			/* customColorMethod(percentage) {
 				if (percentage < 20) {
 					return '#909399';
 				} else if (percentage < 99) {
@@ -103,7 +84,7 @@
 				} else {
 					return '#67c23a';
 				}
-			},
+			}, */
 			
 			/* 开始 */
 			openCameraBtn() {
@@ -112,23 +93,31 @@
 				this.openCamera();
 			},
 			
-			startRecording() {
+			/* startRecording() {
 				this.startBtn.disabled = true;
 				this.stopBtn = true;
 				this.startRecord();
-			},
+			}, */
 			
-			saveRecording() {
-				this.saver();
-			},
+			
 			
 			setRecording() {
 				if (this.openBtn.disabled) {
 					this.setImage();
 				}
 			},
+			clearsetRecording() {
+				this.imgSrc = '';
+			},
+			saveRecording() {
+				
+				if (this.imgSrc) {
+					this.saveImage();
+				}
+				
+			},
 			
-			stopRecording() {
+			/* stopRecording() {
 				// 结束
 				var that = this;
 				that.stopRecord(function() {
@@ -144,7 +133,7 @@
 					that.saver();
 					that.$emit("change", false);
 				});
-			},
+			}, */
 			
 			// 打开摄像头
 			openCamera() {
@@ -155,8 +144,8 @@
 				}
 				var video = document.createElement('video');
 			
-				var videoWidth = 320;
-				var videoHeight = 238;
+				var videoWidth = 500;
+				var videoHeight = 375;
 			
 				video.controls = false;
 				video.muted = true;
@@ -196,7 +185,7 @@
 				});
 			},
 			// 开始录制
-			startRecord() {
+			/* startRecord() {
 				var that = this;
 				that.startBtn.start = true;
 				that.mediaRecorder.start();
@@ -219,9 +208,9 @@
 						that.$emit("change", false);
 					});
 				}, 10000);
-			},
+			}, */
 			// 保存录制文件
-			saver() {
+			/* saver() {
 				this.startBtn.start = false;
 				// (new Date).toISOString().replace(/:|\./g, '-')
 				var file = new File([this.recorderFile], (new Date() * 1000) + '.mp4', {
@@ -229,41 +218,40 @@
 				});
 				this.saveBtn.disabled = true;
 				this.stopBtn = false;
-				if (file) {
-					this.update(file, 2)
-				}
-				
-			},
+				console.log(file);
+			}, */
 			//  绘制图片（拍照功能）
 			setImage() {
 				var thisCancas = document.getElementById('canvasCamera');
 				
 				var thisContext = thisCancas.getContext('2d');
 				
-				var thisVideo = document.getElementsByTagName("video")[1];
+				var thisVideo = document.getElementsByTagName("video")[0];
 				
 				// 点击，canvas画图
-				thisContext.drawImage(thisVideo, 0, 0, 318, 238)
+				thisContext.drawImage(thisVideo, 0, 0, 500, 375)
 				// 获取图片base64链接
 				var image = thisCancas.toDataURL('image/png')
 				this.imgSrc = image;
 				let nowTime = new Date() * 1000;
 				this.imageFiles = this.dataURLtoFile(image, nowTime);
-				console.log(this.imageFiles)
-				if (this.imageFiles) {
-					this.update(this.imageFiles, 1)
-				}
 				// _
+			},
+			/* 保存图片 */
+			saveImage() {
+				if (this.imageFiles) {
+					this.update(this.imageFiles);
+				}
 			},
 			
 			// 停止录制
-			stopRecord(callback) {
+			/* stopRecord(callback) {
 				this.stopRecordCallback = callback;
 				// 终止录制器
 				this.mediaRecorder.stop();
 				// 关闭媒体流
 				this.closeStream(this.mediaStream);
-			},
+			}, */
 			
 			/**
 			 * 获取用户媒体设备(处理兼容的问题)
@@ -356,18 +344,11 @@
 			
 			//	关闭弹窗执行
 			close() {
-				var that = this;
-				that.$emit("change", that.filelist)
-				clearInterval(that.startInterval);
-				clearTimeout(that.startTimeOut);
-				that.openBtn.disabled = false;
-				that.stopBtn = false;
-				that.startBtn.start = false;
-				that.startBtn.disabled = true;
+				this.$emit("change", false)
 			},
 			
 			/* 上传文件开始 */
-			update(file, type) { //上传附件（此时执行的是上传到服务器）
+			update(file) { //上传附件（此时执行的是上传到服务器）
 				var that = this;
 				let postData = new FormData(); //创建form对象
 				postData.append('file', file); //通过append向form对象添加数据
@@ -378,24 +359,43 @@
 					}
 				}).then(function(response) {
 					if (response && response.data && response.data.data && response.data.code == 200) {
-						that.filelist = {};
-						that.filelist = {
-							start: false,
-							fileimgurl: {
-								url: response.data.data.url,
-								type: type
-							}
-						};
-						if (that.filelist) {
-							that.close()
+						that.fileList = {};
+						that.fileList = {
+							record_id: that.centerDialogVisible.record_id,
+							url: response.data.data.url
+						}
+						if (that.fileList) {
+							that.updataImg()
 						}
 					}
 				}).catch(function(error) {
 					console.log(error);
 				});
 			},
+			updataImg() {
+				let that = this;
+				that.axios({
+					method: 'post',
+					url: that.url + '/api/v1/tray/add-image',
+					params: that.fileList,
+					headers: {
+						"content-type": "application/json",
+						"token": that.token
+					}
+				}).then( response => {
+					if (response && response.data.code == 200) {
+						that.$message({
+							message: '操作成功',
+							type: 'success',
+							offset: 300
+						})
+						that.close()
+					}
+				}).catch( error => {
+					console.log(error)
+				});
+			},
 			/* 上传文件结束 */
-			
 		}
 	}
 </script>
@@ -404,8 +404,8 @@
 	.Record {
 		
 		article {
-			width: 660px;
-			height: 400px;
+			width: 100%;
+			// height: 400px;
 			display: -webkit-box;
 			display: -ms-flexbox;
 			display: flex;
@@ -418,14 +418,14 @@
 			background-color: white;
 			
 			.experiment {
-				width: 320px;
-				height: 240px;
+				width: 500px;
+				height: 375px;
 				border: 1px solid green;
-				margin: 50px auto;
+				margin: 10px auto;
 				
 				#videos-container {
-					width: 320px;
-					height: 240px;
+					width: 500px;
+					height: 375px;
 				}
 				.el-progress {
 					// width: 270px;

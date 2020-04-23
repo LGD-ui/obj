@@ -96,6 +96,7 @@
 import { mapActions, mapState, mapGetters } from "vuex"
 import Left from '@/components/Left.vue'
 import Head from '@/components/Head.vue'
+import moment from 'moment'
 export default {
     name: 'SupplierList',
 	components: {
@@ -113,17 +114,10 @@ export default {
     },
     created() {
         this.getData();
-        // 时间格式化
-        Date.prototype.toLocaleString = function() {
-          return this.getFullYear() + "/" + ((this.getMonth() + 1) < 10 ? '0' + (this.getMonth() + 1) : (this.getMonth() +
-            1)) + "/" + (this.getDate() < 10 ? '0' + this.getDate() : this.getDate()) + " " + (this.getHours() < 10 ?
-            '0' + (this.getHours()) : this.getHours()) + ":" + (this.getMinutes() < 10 ? ('0' + this.getMinutes()) :
-            this.getMinutes()) + ":" + (this.getSeconds() < 10 ? '0' + this.getSeconds() : this.getSeconds())
-        };
     },
     filters: {
         formatDate: function(val) {
-            return new Date(val * 1000).toLocaleString().slice(0, -3);
+            return moment(val*1000).format("YYYY/MM/DD")
         }
     },
 	computed: {

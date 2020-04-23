@@ -34,19 +34,21 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-	// console.log(to.fullPath, to.fullPath.startsWith("/login"))
-	if (to.fullPath != '/login') {
-		let token = sessionStorage.getItem('token');
-		let user = sessionStorage.getItem('user');
+    let baseUrl = to.fullPath.startsWith("/login");
+    let token = sessionStorage.getItem('token');
+    let user = sessionStorage.getItem('user');
+    // to.fullPath != '/login'
+	if (baseUrl) {
+		next();
+	} else {
 		if (token && user) {
-			next();
+            next();
 		} else {
 			sessionStorage.removeItem("token");
-			sessionStorage.removeItem("user");
+            sessionStorage.removeItem("user");
+            localStorage.removeItem("index");
 			next("/login");
 		}
-	} else {
-		next();
 	}
 });
 router.afterEach((to) => {
@@ -58,7 +60,7 @@ router.afterEach((to) => {
 	if (user) {
 		Watermark.set(user);
 	}
-	
+
 });
 
 export default router

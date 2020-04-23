@@ -1,12 +1,12 @@
 <template>
-	<!-- 生产管理 -->
+	<!-- 生产计划 -->
 	<el-container>
 		<Left/>
 		<el-container>
 			<el-main style="padding: 10px;">
 				<Head/>
 				<div class="Production">
-					<div class="search">
+					<!-- <div class="search">
 						<div class="demo-input-suffix">
 							<el-input suffix-icon="el-icon-search" style="width: 30.625rem;" v-model.trim="search_name"
 								autofocus placeholder="搜索" @keyup.enter.native="searchChange">
@@ -14,56 +14,71 @@
 							</el-input>
 							<el-button type="primary" @click="clearSearchChange">全部</el-button>
 						</div>
-					</div>
+					</div> -->
 					
 					<el-table :data="tableData.tableList" :header-cell-style="tableheader" v-loading="tableData.loading " element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
 						element-loading-background="rgba(0, 0, 0, 0.5)" >
-						<el-table-column label="生产编号" min-width="60">
+						
+						<el-table-column label="计划编号" min-width="60">
 							<template slot-scope="scope">
 								<span>{{ scope.row.id || '-- --' }}</span>
 							</template>
 						</el-table-column>
 						<el-table-column label="名称">
 							<template slot-scope="scope">
-								<span>{{ scope.row.name || '-- --' }}</span>
+								<span>{{ scope.row.product_name || '-- --' }}</span>
 							</template>
 						</el-table-column>	
+						<el-table-column label="工序名称">
+							<template slot-scope="scope">
+								<span>{{ scope.row.procedure_name || '-- --' }}</span>
+							</template>
+						</el-table-column>
 						<el-table-column label="工序">
 							<template slot-scope="scope">
-								<span>{{ scope.row.item || '-- --' }}</span>
+								<span>{{ scope.row.procedure_detail_number || '-- --' }}</span>
+							</template>
+						</el-table-column>
+						<el-table-column label="批次">
+							<template slot-scope="scope">
+								<span>{{ scope.row.batch || '-- --' }}</span>
 							</template>
 						</el-table-column>
 						<el-table-column label="数量">
 							<template slot-scope="scope">
-								<span>{{ scope.row.material || '-- --' }}</span>
+								<span>{{ scope.row.number || '-- --' }}</span>
 							</template>
 						</el-table-column>
 						<el-table-column label="生产日期">
 							<template slot-scope="scope">
-								<span>{{ scope.row.material || '-- --' }}</span>
+								<span>{{ scope.row.created_at | formatDate }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="质检报告">
+						<el-table-column label="状态" align="center" width="80px"
+							:filters="[
+								{ text: '未开始', value: 1 }, { text: '进行中', value: 2 },
+								{ text: '已完成', value: 3 }, { text: '已配送', value: 4 }
+							]" :filter-method="filterTag">
 							<template slot-scope="scope">
-								<el-button size="mini" icon="el-icon-plus" @click="operation(scope.row, 1)"></el-button>
-								<el-button size="mini" icon="el-icon-plus" @click="operation(scope.row, 2)">批量</el-button>
+								<el-tag size="mini" type="danger" v-if="scope.row.status == 1">未开始</el-tag>
+								<el-tag size="mini" type="warning" v-if="scope.row.status == 2">进行中</el-tag>
+								<el-tag size="mini" type="" v-if="scope.row.status == 3">已完成</el-tag>
+								<el-tag size="mini" type="success" v-if="scope.row.status == 4">已配送</el-tag>
 							</template>
 						</el-table-column>
-						<!-- <el-table-column label="计划" prop="category_">
+						<el-table-column label="质检报告" width="150px" align="center">
 							<template slot-scope="scope">
-								<span>{{ scope.row.category || '-- --' }}</span>
-							</template>
-						</el-table-column> -->
-						<!-- <el-table-column label="备注" prop="note_">
-							<template slot-scope="scope">
-								<span>{{ scope.row.note || '-- --' }}</span>
+								<el-button size="mini" icon="el-icon-plus" :disabled="scope.row.status >= 3 ? true : false" @click="operation(scope.row, 1)"></el-button>
+								<el-button size="mini" icon="el-icon-plus" :disabled="scope.row.status >= 3 ? true : false" @click="operation(scope.row, 2)">批量</el-button>
 							</template>
 						</el-table-column>
-						<el-table-column label="总数量" prop="count">
+						<el-table-column label="操作" align="center" width="80px">
 							<template slot-scope="scope">
-								<span >{{ scope.row.stock || '-- --' }}</span>
+								<el-button type="success" size="mini" :disabled="scope.row.status == 3 ? false : true" @click="delivergoods(scope.row)">发货</el-button>
 							</template>
-						</el-table-column> -->
+						</el-table-column>
+						<!--  -->
+						<!--  -->
 						<!-- <el-table-column label="图片" prop="image">
 							<template slot-scope="scope">
 								<el-popover v-if="scope.row.image" placement="right" title="" trigger="hover">
@@ -100,9 +115,11 @@
 					</div>
 					
 					<!-- 单个 -->
-					<Singledialog v-bind:SingleDialogVisible="SingleDialogVisible" @change="SingleClose"></Singledialog>
+					<Singledialog ref="child" v-bind:SingleDialogVisible="SingleDialogVisible" @change="SingleClose"></Singledialog>
 					<!-- 批量 -->
 					<Batchdialog v-bind:BatchDialogVisible="BatchDialogVisible" @change="BatchClose"></Batchdialog>
+					<!-- 发货 -->
+					<Deliverdialog v-bind:DeliverdialogVisible="DeliverdialogVisible" @change="DeliverClose"></Deliverdialog>
 					
 				</div>
 			</el-main>
@@ -115,11 +132,13 @@
 	import { mapActions, mapState, mapGetters } from "vuex"
 	import Left from '@/components/Left.vue'
 	import Head from '@/components/Head.vue'
+	import moment from 'moment'
 	import Singledialog from '@/components/content/Supplier/production/Singledialog.vue'
 	import Batchdialog from '@/components/content/Supplier/production/Batchdialog.vue'
+	import Deliverdialog from '@/components/content/Supplier/production/Deliverdialog.vue'
 	export default {
 		name: "Production",
-		components: {Left, Head, Singledialog, Batchdialog},
+		components: {Left, Head, Singledialog, Batchdialog, Deliverdialog},
 		computed: {
 			...mapState({
 				url: state => state.url,
@@ -128,6 +147,11 @@
 				token: "getToken"
 			})
 		},
+		filters: {
+			formatDate(val) {
+				return moment( val * 1000 ).format("YYYY/MM/DD");
+			}
+		},
 		data() {
 			return {
 				search_name: '',
@@ -135,8 +159,12 @@
 					loading: true,
 					tableList: [{}], //15
 					currentPage: 1,
-					pageSize: 15,
+					pageSize: 10,
 					total: 0,
+				},
+				DeliverdialogVisible: {
+					dialog: false,
+					obj: {},
 				},
 				SingleDialogVisible: {
 					dialog: false,
@@ -149,60 +177,88 @@
 			}
 		},
 		created() {
-			setTimeout(() => {
-				this.tableData.loading = false
-			}, 1000)
+			this.getProduction();
 		},
 		methods: {
+			/* 列表 */
 			getProduction() {
 				let that = this;
 				that.axios({
 					method: 'GET',
-					url: that.url + '',
+					url: that.url + '/api/v1/supplier/task-list',
 					data: '',
-					params: {},
+					params: {
+						page: that.tableData.currentPage,
+						size: that.tableData.pageSize,
+					},
 					headers: {
 						"content-type": "application/json",
-						'token': that.token
+						"token": that.token
 					}
 				}).then( response => {
 					if (response && response.data && response.data.data && response.data.code == 200) {
-						console.log(response)
+						var data = response.data.data.list;
+						that.tableData.total = response.data.data.count.total;
+						that.tableData.tableList = data;
+						that.tableData.loading = false;
 					}
 				}).catch( error => {
 					console.log(error)
+					that.tableData.loading = false;
 				});
 			},
+			
+			filterTag(value, row) {
+				return row.status === value;
+			},
+			/* 搜索 */
 			searchChange() {
 				console.log(this.search_name);
 			},
-			
+			/* 分页 */
 			handleCurrentChange(currentPage) {
 				this.tableData.currentPage = currentPage;
+				this.getProduction();
 			},
+			/* clear搜索value */
 			clearSearchChange() {
 				this.search_name = '';
+				this.getProduction();
 			},
-			
+			/* 质检报告弹窗 */
 			operation(row, type) {
-				console.log(row)
-				if (type == 1) {
+				if (type == 1) {	//1  单个
 					this.SingleDialogVisible.dialog = true;
 					this.SingleDialogVisible.obj = row;
-				} else {
+					this.$refs.child.getSingle(row);
+				} else {	//2 批量
 					this.BatchDialogVisible.dialog = true;
 					this.BatchDialogVisible.obj = row;
 				}
 			},
+			
+			/* 发货 */
+			delivergoods(row) {
+				this.DeliverdialogVisible.obj = row;
+				this.DeliverdialogVisible.dialog = true;
+			},
+			/* 关闭发货弹窗 */
+			DeliverClose(param) {
+				this.DeliverdialogVisible.dialog = param;
+				this.getProduction();
+			},
+			/* 关闭单个弹窗 */
 			SingleClose(param) {
 				this.SingleDialogVisible.dialog = param;
+				this.getProduction();
 			},
+			/* 关闭批量弹窗 */
 			BatchClose(param) {
 				this.BatchDialogVisible.dialog = param;
+				this.getProduction();
 			},
-			
-			
-			tableheader({ row, column, rowIndex, columnIndex }) { //表头样式
+			/* 表头样式 */
+			tableheader({ row, column, rowIndex, columnIndex }) {
 				if (rowIndex === 0) {
 					return 'height:50px;background:#e5e5e5'
 				}
@@ -228,7 +284,7 @@
 		}
 		.el-table {
 			height: 845px;
-			margin: 1rem 0;
+			margin: 0 0 1rem;
 		}
 	}
 </style>

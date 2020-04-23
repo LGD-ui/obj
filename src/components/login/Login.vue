@@ -1,4 +1,5 @@
 <template>
+	<!--  -->
 	<div class="Login">
 		<el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="demo-ruleForm">
 			<div class="demonstration">登　录</div>
@@ -14,7 +15,7 @@
 				<el-divider>扫码登录</el-divider>
 				<el-button type="text" size="mini" style="margin-top: 10px;" @click="scancode(2)">扫码登录</el-button>
 			</div>
-			
+
 		</el-form>
 		<el-dialog :visible.sync="DialogVisible" width="500px" :modal="false" :show-close="false" @close="scancode('')">
 			<div class="card">
@@ -200,7 +201,7 @@
 								break;
 							case 'supplier': //新增供应商权限***
 								that.$router.push({
-									path: '/supplierEnter'
+									path: '/supplierdetail'
 								});
 								that.$message({
 									message: '登录成功',
@@ -221,18 +222,22 @@
 					}
 				}).catch(err => {})
 			},
-			functionset(key, value) { //登录超时判断
+
+			/* 存储判断登录超时的数对象 //登录超时判断 */
+			functionset(key, value) {
 				var curTime = new Date().getTime();
 				localStorage.setItem(key, JSON.stringify({
 					data: value,
 					time: curTime
 				}));
 			},
+			/* 结束 */
+
 			submitForm(formName) {
-				/* 
+				/*
 					15469823145		暂存端
 					17765982130		装配端
-					13109887898		供应商 
+					13109887898		供应商
 				*/
 
 				var that = this;
@@ -301,7 +306,7 @@
 									case 'supplier': //新增供应商权限***
 										that.functionset('ruleFormStat', tokenUser)
 										that.$router.push({
-											path: '/supplierEnter'
+											path: '/supplierdetail'
 										});
 										that.$message({
 											message: '登录成功',

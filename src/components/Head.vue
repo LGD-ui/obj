@@ -104,14 +104,13 @@
 				var that = this;
 				sessionStorage.removeItem("token");
 				sessionStorage.removeItem("user");
-				localStorage.removeItem("lastTime");
+				sessionStorage.removeItem("IP");
+				localStorage.removeItem("index");
 				localStorage.removeItem("ruleFormStat");
 				that.$message({
-					message: '已退出',
-					offset: 300
+					message: '已退出'
 				});
 				that.$router.push("/login");
-				// location.reload();
 			}
 		}
 	}

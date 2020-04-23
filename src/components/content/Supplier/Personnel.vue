@@ -121,7 +121,7 @@
 					loading: true,
 					tableList: [{}], //15
 					currentPage: 1,
-					pageSize: 15,
+					pageSize: 10,
 					total: 0,
 				}
 			}

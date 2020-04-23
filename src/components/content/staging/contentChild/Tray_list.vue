@@ -90,7 +90,7 @@
 							<el-table-column label="操作" prop="parts_number">
 								<template slot-scope="scope">
 									<!-- <span style="">{{ scope.row.parts_number }}</span> -->
-									<el-button  size="mini" @click="getTotray(scope.row.parts_number)">装盘</el-button>
+									<el-button  size="mini" v-if="scope.row.is_use==1" @click="getTotray(scope.row.parts_number)">装盘</el-button>
 								</template>
 							</el-table-column>
 							<el-table-column align="right">

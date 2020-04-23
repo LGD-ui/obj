@@ -3,28 +3,28 @@
 	<div>
 		<el-dialog :visible.sync="wrenchDialogVisible.dialog" :show-close="false" :modal="false" :before-close="close" width="800px">
 			<div class="Torquewrench">
-				<el-table :data="tableData" :row-class-name="tableRowClassName" v-infinite-scroll="load" :infinite-scroll-disabled="disabled" style="width: 100%">
-					
+				<el-select v-model="wrenchname" :value-key="wrenchname" filterable placeholder="选择扳手"  @change="selectChange">
+					<el-option v-for="item in tableData" :key="item.id" :label="item.name" :value="item.ip"></el-option>
+				</el-select>
+				<el-table :data="nowwrench" :row-class-name="tableRowClassName" :header-cell-style="tableheader" style="width: 100%">
 					<el-table-column prop="name" label="扳手编号#"></el-table-column>
 					<el-table-column prop="ip" label="扳手IP"></el-table-column>
-					<el-table-column label="操作" width="100" align="center">
+					<el-table-column label="连接状态">
 						<template slot-scope="scope">
-							<el-link type="primary" :underline="false" v-if="!scope.row.onopen" @click="handleClick(scope.row, scope.$index)"><i v-if="scope.row.iconloading" class="el-icon-loading"></i>连接扳手</el-link>
-							<el-link type="warning" :underline="false" v-if="scope.row.onopen" @click="handleClick(scope.row, scope.$index)">断开连接</el-link>
+							<span>{{scope.row.onopen ? '已连接':'未连接'}}</span>
 						</template>
 					</el-table-column>
-					<el-table-column type="expand">
+					<el-table-column label="操作" width="100" align="center">
 						<template slot-scope="scope">
-							<el-table :data="scope.row.wrenchArr" :show-header="false" size="mini">
-								<el-table-column prop="name"></el-table-column>
-							</el-table>
+							<el-link type="primary" :underline="false" v-if="!scope.row.onopen" @click="handleClick(scope.row)"><i v-if="scope.row.iconloading" class="el-icon-loading"></i>连接</el-link>
+							<el-link type="warning" :underline="false" v-if="scope.row.onopen" @click="handleClick(scope.row)">断开</el-link>
 						</template>
 					</el-table-column>
 				</el-table>
-				<div class="loading">
-					<p v-if="total > 10 && loading">加载中...</p>
-					<p v-if="total > 10 && noMore">没有更多了</p>
-				</div>
+				<el-table :data="wrenchArr" :header-cell-style="tableheader" size="mini">
+					<el-table-column label="数据" prop="name"></el-table-column>
+					<el-table-column label="力矩" prop="name"></el-table-column>
+				</el-table>
 			</div>
 		</el-dialog>
 	</div>
@@ -40,40 +40,34 @@
 			...mapGetters({
 				url: "geturl",
 				token: "getToken"
-			}),
-			noMore () {
-				return this.tableData.length >= this.total
-			},
-			disabled () {
-				return this.loading || this.noMore
-			}
+			})
 		},
 		data() {
 			return {
+				wrenchname: '',
 				row: {},
 				$index: 0,
 				websock: null,
 				tableData: [],
+				wrenchArr: [],
+				nowwrench: [],
 				page: 1,
 				size: 10,
 				total: 0,
 				stompClient: '',
 				timer: '',
-				loading: false,
 			}
 		},
 		props: {
 			wrenchDialogVisible: {}
 		},
 		created() {
-			this.getwrenchList();
+			if (sessionStorage.getItem("IP")) {
+				this.wrenchname = sessionStorage.getItem("IP");
+			}
 		},
 		methods: {
-			load() {
-				this.loading = true;
-				this.page += 1;
-				this.getwrenchList();
-			},
+			/* 获取扳手列表 */
 			getwrenchList() {
 				var that = this;
 				var url = that.url;
@@ -94,52 +88,80 @@
 				}).then(function(response) {
 					if (response && response.data && response.data.data && response.data.code == 200) {
 						var data = response.data.data.list;
-						that.total = response.data.data.count.total
-						that.loading = false;
+						that.total = response.data.data.count.total;
 						data.forEach(item => {
 							item.onopen = false;
 							item.iconloading = false;
-							item.wrenchArr = [];
+							if (item.ip == that.wrenchname) {
+								that.nowwrench = [item];
+								that.row = item;
+							}
 							return item
 						})
-						if (that.tableData.length == 0) {
-							that.tableData = [...data];
-						} else {
-							that.tableData = that.tableData.concat(data);
-						}
-						
-						
+						that.tableData = [...data];
+						// that.webSocketstatus(that.row.id, 1);
 					}
 				}).catch(function(error) {
 					console.log(error);
 				});
 			},
-			tableRowClassName({ row, rowIndex }) {
+			/* 获取扳手列表结束 */
+			/* 选择扳手 */
+			selectChange() {
+				sessionStorage.setItem("IP", this.wrenchname);
+				if(this.websock) {
+					this.webSocketstatus(this.row.id, 2);
+				}
+				this.tableData.forEach(item => {
+					if (item.ip == this.wrenchname) {
+						this.nowwrench = [item];
+						this.row = item;
+					}
+				})
+			},
+			/* 选择扳手结束 */
+			/* table样式 */
+			tableRowClassName({ row, rowIndex }) {	//当前行样式
 				if (row.onopen) {
 					return 'success-row';
 				}
 				return '';
 			},
+			tableheader({ row, column, rowIndex, columnIndex }) { //表头样式
+				if (rowIndex === 0) {
+					return 'height:40px;background:#e5e5e5'
+				}
+			},
+			/* table样式结束 */
+			/* 关闭dialog */
 			close() {
+				if(this.websock) {
+					this.webSocketstatus(this.row.id, 2);
+				}
+				
 				this.$emit("change", false)
 			},
-			handleClick(row, rowIndex) {
+			/* 关闭dialog结束 */
+			/* 连接或断开 */
+			handleClick(row) {
 				if (!row.onopen) {
 					console.log('连接')
 					this.row = row;
-					this.$index = rowIndex;
-					this.tableData[rowIndex].iconloading = true;
-					this.initWebSocket();
+					this.nowwrench[0].iconloading = true;
+					this.webSocketstatus(this.row.id, 1);
 				}
 				if (row.onopen) {
 					console.log('断开')
+					this.webSocketstatus(this.row.id, 2);
 					
-					this.websock.close() //离开路由之后断开websocket连接
 				}
 			},
+			/* 连接或断开结束 */
 			
+			
+			/* WebSocket开始 */
 			initWebSocket() { //初始化weosocket
-				const wsuri = 'ws://192.168.199.3:1000';
+				const wsuri = 'ws://192.168.10.10:1000';
 				this.websock = new WebSocket(wsuri);
 				this.websock.onmessage = this.websocketonmessage;
 				this.websock.onopen = this.websocketonopen;
@@ -147,17 +169,17 @@
 				this.websock.onclose = this.websocketclose;
 			},
 			websocketonopen() { //连接建立之后执行send方法发送数据
-				this.tableData[this.$index].iconloading = false;
-				this.tableData[this.$index].onopen = true;
+				this.nowwrench[0].iconloading = false;
+				this.nowwrench[0].onopen = true;
 				this.websocketsend(this.row.ip);
-				console.log('%cwebsocketonopen连接建立之后执行send方法发送数据','color: #2893ff;font-weight: bold;')
+				console.log('%cwebsocketonopen连接建立之后执行send方法发送数据','color: #03be00;font-weight: bold;')
 			},
 			websocketonerror() { //连接建立失败重连
-				this.initWebSocket();
-				console.log('%cwebsocketonerror连接建立失败重连','color: #2893ff;font-weight: bold;')
+				this.webSocketstatus(this.row.id, 1);
+				console.log('%cwebsocketonerror连接建立失败重连','color: #ff5500;font-weight: bold;')
 			},
 			websocketonmessage(e) { //数据接收
-				console.log('%cwebsocketonmessage接受的数据','color: #2893ff;font-weight: bold;')
+				console.log('%cwebsocketonmessage接受的数据','color: #aaff7f;font-weight: bold;')
 				var that = this;
 				if (e && e.data) {
 					const redata = JSON.parse(e.data);
@@ -186,18 +208,18 @@
 						}).then(function(response) {
 							if (response && response.data && response.data.data && response.data.code == 200) {
 								console.log(response)
-								that.tableData[that.$index].wrenchArr.push({
+								that.wrenchArr.push({
 									name: redata.message
 								});
-								that.initWebSocket();
+								that.webSocketstatus(that.row.id, 1);
 							}
 						}).catch(function(error) {
 							console.log(error);
 						});
 					} else {
 						if (redata.message) {
-							that.tableData[that.$index].onopen = false;
-							that.tableData[that.$index].iconloading = false;
+							that.nowwrench[0].onopen = false;
+							that.nowwrench[0].iconloading = false;
 							
 							that.$message({
 								message: redata.message,
@@ -205,7 +227,7 @@
 								offset: 400
 							})
 						} else {
-							that.initWebSocket();
+							that.webSocketstatus(that.row.id, 1);
 						}
 						
 					}
@@ -217,9 +239,40 @@
 				console.log('%cwebsocketsend数据发送','color: #2893ff;font-weight: bold;')
 			},
 			websocketclose(e) { //关闭
-				this.tableData[this.$index].iconloading = false;
-				this.tableData[this.$index].onopen = false;
-				console.log('%cwebsocketclose断开连接','color: #2893ff;font-weight: bold;');
+				this.nowwrench[0].iconloading = false;
+				this.nowwrench[0].onopen = false;
+				console.log('%cwebsocketclose断开连接','color: #adadad;font-weight: bold;');
+			},
+			/* WebSocket结束 */
+			
+			webSocketstatus(id, status) {	//每次连接或断开扳手调用
+				let that = this;
+				that.axios({
+					method: 'GET',
+					url: that.url + '/api/v1/assemble/update-wrench',
+					params: { id, status },
+					headers: {
+						"content-type": "application/json",
+						"token": that.token
+					}
+				}).then( response => {
+					if (response && response.data.code == 200) {
+						
+						if (status == 1) {
+							that.initWebSocket();
+						}
+						if (status == 2) {
+							that.websock.close() //离开路由之后断开websocket连接
+						}
+					}
+				}).catch( error => {
+					console.log(error)
+					that.$message({
+						message: "设备正在使用中",
+						type: "error",
+						offset: 300
+					})
+				});
 			},
 			
 		},
@@ -237,19 +290,15 @@
 		padding: 0 !important;
 	}
 	/deep/ .el-dialog__body {
-		padding: 30px 20px 10px;
+		padding: 30px 20px;
 	}
 
 	.Torquewrench {
-
+		/deep/ .el-select .el-input {
+			width: 200px;
+		}
 		/deep/ .el-table {
-			height: 490px;
-			overflow: auto;
-			
-			.el-table {
-				height: auto;
-			}
-			
+			margin-top: 10px;
 			.warning-row {
 				background: oldlace;
 			}
@@ -259,11 +308,6 @@
 			}
 		}
 		
-		.loading {
-			height: 20px;
-			text-align: center;
-			margin-top: 10px;
-		}
 
 	}
 </style>

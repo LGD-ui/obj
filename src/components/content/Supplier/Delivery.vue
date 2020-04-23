@@ -1,12 +1,12 @@
 <template>
-	<!-- 发货信息 -->
+	<!-- 物流管理 -->
 	<el-container>
 		<Left/>
 		<el-container>
 			<el-main style="padding: 10px;">
 				<Head/>
 				<div class="Delivery">
-					<div class="search">
+					<!-- <div class="search">
 						<div class="demo-input-suffix">
 							<el-input suffix-icon="el-icon-search" style="width: 30.625rem;" v-model.trim="search_name"
 								autofocus placeholder="搜索" @keyup.enter.native="searchChange">
@@ -14,50 +14,53 @@
 							</el-input>
 							<el-button type="primary" @click="clearSearchChange">全部</el-button>
 						</div>
-					</div>
-					
+					</div> -->
+
 					<el-table :data="tableData.tableList" :header-cell-style="tableheader" v-loading="tableData.loading " element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
 						element-loading-background="rgba(0, 0, 0, 0.5)" >
 						<el-table-column label="名称" min-width="60">
 							<template slot-scope="scope">
-								<span>{{ scope.row.id || '-- --' }}</span>
+								<span>{{ scope.row.product_name || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="工序" prop="name_">
+						<el-table-column label="工序">
 							<template slot-scope="scope">
-								<span>{{ scope.row.name || '-- --' }}</span>
+								<span>{{ scope.row.procedure_detail_number || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="计划" prop="items">
+						<el-table-column label="计划">
 							<template slot-scope="scope">
 								<span>{{ scope.row.item || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="生产日期" prop="material_">
+						<el-table-column label="生产日期">
 							<template slot-scope="scope">
-								<span>{{ scope.row.material || '-- --' }}</span>
+								<span>{{ scope.row.created_at | formatDate }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="数量" prop="specs_">
+						<el-table-column label="数量" width="60px">
 							<template slot-scope="scope">
-								<span>{{ scope.row.specs || '-- --' }}</span>
+								<span>{{ scope.row.number || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="物流类型" prop="category_">
+						<el-table-column label="物流类型">
 							<template slot-scope="scope">
-								<el-select v-model="scope.row.value" :value-key="scope.row.value" size="mini" @change="selectChange" filterable placeholder="物流类型" style="width: 120px;">
-									<el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"></el-option>
-								</el-select>
+								<span>{{ scope.row.express_name || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="单号/车牌" prop="note_">
+						<el-table-column label="单号" width="140px">
 							<template slot-scope="scope">
-								<span>{{ scope.row.note || '-- --' }}</span>
+								<span>{{ scope.row.express_numbers || '-- --' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="目的地" prop="count">
+						<el-table-column label="车牌号" align="center" width="110px">
 							<template slot-scope="scope">
-								<span >{{ scope.row.stock || '-- --' }}</span>
+								<span>{{ scope.row.vehicle_numbers || '-- --' }}</span>
+							</template>
+						</el-table-column>
+						<el-table-column label="目的地">
+							<template slot-scope="scope">
+								<span >{{ scope.row.accept_supplier_name || '-- --' }}</span>
 							</template>
 						</el-table-column>
 						<!-- <el-table-column label="图片" prop="image">
@@ -83,29 +86,30 @@
 								<el-button @click="submit(scope.$index,scope.row)" type="primary" :disabled="go_numArr[scope.$index].go_num == 0">添加</el-button>
 							</template>
 						</el-table-column> -->
-									
+
 					</el-table>
-					
+
 					<div class="block">
-						<el-pagination 
-							v-if="tableData.total>10" 
-							@current-change="handleCurrentChange" 
+						<el-pagination
+							v-if="tableData.total>10"
+							@current-change="handleCurrentChange"
 							layout="prev, pager, next, jumper"
 							:total="tableData.total">
 						</el-pagination>
 					</div>
-					
+
 				</div>
 			</el-main>
 		</el-container>
 	</el-container>
-	
+
 </template>
 
 <script>
 	import { mapActions, mapState, mapGetters } from "vuex"
 	import Left from '@/components/Left.vue'
 	import Head from '@/components/Head.vue'
+	import moment from 'moment'
 	export default {
 		name: "Delivery",
 		components: {Left, Head},
@@ -117,71 +121,72 @@
 				token: "getToken"
 			})
 		},
+		filters: {
+			formatDate: function(val) {
+				return moment( val * 1000 ).format("YYYY/MM/DD");
+			}
+		},
 		data() {
 			return {
 				search_name: '',
-				options: [
-					{ value: '0', label: '自提' },
-					{ value: '1', label: '圆通快递' },
-					{ value: '2', label: '中通快递' },
-					{ value: '3', label: '邮政快递' },
-					{ value: '4', label: '韵达快递' },
-					{ value: '5', label: '顺丰快递' },
-				],
 				tableData: {
 					loading: true,
-					tableList: [{}], //15
+					tableList: [], //15
 					currentPage: 1,
-					pageSize: 15,
+					pageSize: 10,
 					total: 0,
 				}
 			}
 		},
 		created() {
-			setTimeout(() => {
-				this.tableData.loading = false
-			}, 1000)
+			this.getDelivery();
 		},
 		methods: {
 			getDelivery() {
 				let that = this;
 				that.axios({
 					method: 'GET',
-					url: that.url + '',
+					url: that.url + '/api/v1/supplier/logistics',
 					data: '',
-					params: {},
+					params: {
+						page: that.tableData.currentPage,
+						size: that.tableData.pageSize,
+					},
 					headers: {
 						"content-type": "application/json",
 						'token': that.token
 					}
 				}).then( response => {
 					if (response && response.data && response.data.data && response.data.code == 200) {
-						console.log(response)
+						var data = response.data.data.list;
+						that.tableData.total = response.data.data.count.total;
+						that.tableData.tableList = data;
+						that.tableData.loading = false;
 					}
 				}).catch( error => {
 					console.log(error)
+					that.tableData.loading = false;
 				});
 			},
 			searchChange() {
 				console.log(this.search_name);
 			},
-			selectChange(value) {
-				console.log(value)
-			},
-			
+
 			handleCurrentChange(currentPage) {
 				this.tableData.currentPage = currentPage;
+				this.getDelivery();
 			},
 			clearSearchChange() {
 				this.search_name = '';
+				this.getDelivery();
 			},
 			tableheader({ row, column, rowIndex, columnIndex }) { //表头样式
 				if (rowIndex === 0) {
 					return 'height:50px;background:#e5e5e5'
 				}
 			},
-		},
-		
+        },
+
 	}
 </script>
 
@@ -201,7 +206,7 @@
 		}
 		.el-table {
 			height: 845px;
-			margin: 1rem 0;
+			margin: 0 0 1rem;
 		}
 	}
 </style>

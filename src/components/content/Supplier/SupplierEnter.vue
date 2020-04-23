@@ -24,7 +24,7 @@
 						</el-table-column>
 						<el-table-column label="图样名称">
 							<template slot-scope="scope">
-								<span v-if="scope.row.name">{{ scope.row.name }}</span>
+								<span v-if="scope.row.item">{{ scope.row.item }}</span>
 								<span v-else>-- --</span>
 							</template>
 						</el-table-column>

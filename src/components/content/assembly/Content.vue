@@ -283,7 +283,7 @@
 					<cropperPhoto v-bind:centerDialogVisible="cropperPhoto.dialog" @change="changeClose"></cropperPhoto>
 					
 					<!-- Torquewrench -->
-					<wrench v-bind:wrenchDialogVisible="wrench" @change="wrenchClose"></wrench>
+					<wrench ref="getwrench" v-bind:wrenchDialogVisible="wrench" @change="wrenchClose"></wrench>
 					
 				</el-main>
 			</el-main>
@@ -296,7 +296,7 @@
 	import { mapActions, mapState, mapGetters } from "vuex"
 	import Head from '@/components/Head.vue'
 	import SearchInput from './SearchInput.vue'
-	import 'swiper/dist/css/swiper.css'
+	import 'swiper/dist/css/swiper.min.css'
 	import { swiper, swiperSlide } from 'vue-awesome-swiper'
 	import Qs from 'qs'
 	import cropperPhoto from '@/components/content/assembly/cropperPhoto/CropperPhoto.vue'
@@ -466,7 +466,11 @@
 		},
 		methods: {
 			changeClose(param) {
-				this.cropperPhoto.dialog = param;
+				this.cropperPhoto.dialog = param.start;
+				this.fileimgurl = param.fileimgurl;
+				if (this.fileimgurl) {
+					this.assembleObtain();
+				}
 			},
 			wrenchClose(param) {
 				this.wrench.dialog = param;
@@ -521,10 +525,11 @@
 					});
 				}
 				that.barcodeObj = val;
-				if (val.wrench == 2) {
+				if (val.wrench == 1) {	//为2连接扳手
 					that.wrench.dialog = true;
 					that.wrench.barcodeObj = val;
 					that.wrench.query = that.$route.query;
+					that.$refs.getwrench.getwrenchList();
 				}
 				that.okLength = val.index_;
 				that.playerOptions.sources[0].src = val.video;
@@ -1105,7 +1110,7 @@
 		},
 
 		beforeUpdate() { //生命周期（数据发生变化零件滑动）
-			console.log( this.swiper);
+			// console.log( this.swiper);
 			this.swiperOption.scrollbar = '.' + this.swiper.$el[0].nextElementSibling.className;
 			this.swiper.slideTo(this.okLength, 1000, true);
 			this.update_arm_stepsArr();

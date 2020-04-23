@@ -1,10 +1,20 @@
 <template>
 	<el-aside width="180px" style="position: relative;">
 		<el-header>
-			<div>
-				<img src="../assets/logo.png" alt="">
+			<div v-if="user=='supplier'">
+				<router-link to="/supplierdetail">
+					<div>
+						<img src="../assets/logo.png" alt="">
+					</div>
+					<div>智能车间供应商</div>
+				</router-link>
 			</div>
-			<div>智能车间</div>
+			<div v-else>
+				<div>
+					<img src="../assets/logo.png" alt="">
+				</div>
+				<div>智能车间</div>
+			</div>
 		</el-header>
 		<el-main>
 			<el-menu :default-openeds="[]" v-if="user=='product'" :default-active="openeds" :unique-opened="true">
@@ -115,13 +125,13 @@
 			<!-- 供应商 列表 -->
 			<el-menu :default-openeds="['201']" :default-active="openeds" v-if="user=='supplier'">
 				<el-submenu index="201">
-					<template slot="title"><i class="el-icon-setting"></i>菜单</template>
+					<template slot="title"><i class="el-icon-setting"></i>菜单列表</template>
 					<el-menu-item-group>
-						<router-link to="/supplierEnter">
+						<!-- <router-link to="/supplierEnter">
 							<el-menu-item index="201-2" @click="activeIndex('201-2')">添加</el-menu-item>
-						</router-link>
-						
-						
+						</router-link> -->
+
+
 						<router-link to="/order">
 							<el-menu-item index="201-5" @click="activeIndex('201-5')">订单管理</el-menu-item>
 						</router-link>
@@ -134,12 +144,12 @@
 						<router-link to="/delivery">
 							<el-menu-item index="201-4" @click="activeIndex('201-4')">物流管理</el-menu-item>
 						</router-link>
-						<router-link to="/personnel">
+						<!-- <router-link to="/personnel">
 							<el-menu-item index="201-8" @click="activeIndex('201-8')">人员管理</el-menu-item>
-						</router-link>
-						<router-link to="/supplierLog">
+						</router-link> -->
+						<!-- <router-link to="/supplierLog">
 							<el-menu-item index="201-3" @click="activeIndex('201-3')">日志信息</el-menu-item>
-						</router-link>
+						</router-link> -->
 					</el-menu-item-group>
 				</el-submenu>
 			</el-menu>
@@ -182,11 +192,11 @@
 				var that = this;
 				sessionStorage.removeItem("token");
 				sessionStorage.removeItem("user");
-				localStorage.removeItem("lastTime");
+				sessionStorage.removeItem("IP");
+				localStorage.removeItem("index");
 				localStorage.removeItem("ruleFormStat");
 				that.$message({
 					message: '已退出',
-					offset: 300
 				});
 				that.$router.push("/login");
 				// location.reload();
@@ -200,16 +210,16 @@
 </script>
 
 <style scoped>
-	.el-aside {
-		/* background: url();
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: center;
-    background-size: cover;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover; */
-	}
+	/* .el-aside {
+		background: url();
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-position: center;
+        background-size: cover;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+	} */
 
 	.el-aside .el-main {
 		position: absolute;
@@ -238,8 +248,9 @@
 		margin-bottom: 12px;
 	}
 
-	.el-aside .el-header>div {
+	.el-aside .el-header div {
 		color: #FFFFFF;
+		cursor: pointer;
 	}
 
 	.el-aside .el-footer {

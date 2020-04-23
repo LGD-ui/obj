@@ -2,6 +2,10 @@
 
 export default [
 	{
+		path: '/supplierdetail',
+		name: 'Supplierdetail',
+		component: () => import('@/components/content/Supplier/Supplierdetail.vue')
+	}, {
 		path: '/supplierEnter',
 		name: 'SupplierEnter',
 		component: () => import('@/components/content/Supplier/SupplierEnter.vue')

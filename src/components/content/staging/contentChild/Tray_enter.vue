@@ -1,9 +1,9 @@
 <template>
 	<el-container>
-		<Left/>
+		<Left />
 		<el-container>
 			<el-main style="padding: 10px;">
-				<Head/>
+				<Head />
 				<div class="tray_enter">
 					<div style="min-height: 45rem;margin-bottom: 20px;">
 						<div style="margin-top:3rem;width: 65%;display: flex;justify-content: space-around;">
@@ -12,17 +12,17 @@
 							 @input="barcode_Data">
 								<el-button slot="append" type="primary" @click="clear">清除</el-button>
 							</el-input>
-							<el-input suffix-icon="el-icon-full-screen" v-model.trim="barcode_vals_" autofocus style="width: auto" placeholder="请扫描零件码"
-							 @input="tray_generate()" v-if="tableData.length !=0">
+							<el-input suffix-icon="el-icon-full-screen" v-model.trim="barcode_vals_" autofocus style="width: auto"
+							 placeholder="请扫描零件码" @input="tray_generate()" v-if="tableData.length !=0">
 								<el-button slot="append" type="primary" @click="clear">清除</el-button>
 							</el-input>
 						</div>
-				
+
 						<div class="main_del">
 							<div class="main_title">{{barcode_val__}} 托盘配件</div>
-				
+
 							<el-table :data="tableData.slice((currpage - 1) * pagesize, currpage * pagesize)" style="width: 100%">
-				
+
 								<el-table-column prop="product_name" label="图样名称">
 								</el-table-column>
 								<!-- <el-table-column prop="items" label="图样代号">
@@ -36,7 +36,7 @@
 								</el-table-column>
 								<el-table-column prop="material" label="材料">
 								</el-table-column>
-								<el-table-column prop="img" label="图片">
+								<el-table-column prop="img" label="图片" width="100" align="center">
 									<template slot-scope="scope">
 										<!--    <div class="img_div">
 				            <img class="lab_img" :src="scope.row.image" v-if="scope.row.image!=''" alt="">
@@ -48,65 +48,69 @@
 										</el-popover>
 									</template>
 								</el-table-column>
-				
-								<el-table-column prop="number" label="数量">
+
+								<el-table-column prop="number" label="数量" width="80" align="center">
 									<template slot-scope="scope">
 										<!-- <span style="">{{scope.row.count}}/{{ scope.row.number }}</span> -->
 										<span style="">{{ scope.row.number }}</span>
 									</template>
 								</el-table-column>
-				
-								<el-table-column prop="use_number" label="已装数量">
+
+								<el-table-column prop="use_number" label="已装数量" width="80" align="center">
 									<template slot-scope="scope">
 										<!-- <span style="">{{scope.row.count}}/{{ scope.row.number }}</span> -->
 										<span style="">{{ scope.row.use_number }}</span>
 									</template>
 								</el-table-column>
-				
+
 								<!--         <el-table-column prop="count" label="已装数量">
 				        <template slot-scope="scope">
 				
 				          <span style="">{{ scope.row.count }}</span>
 				        </template>
 				      </el-table-column> -->
-				
-				
+
+
 								<!--          <el-table-column prop="type" label="配件类型" width="180">
 				        <template slot-scope="scope">
 				          <span style="">{{scope.row.type==1?'标准件':'非标准件'}}</span>
 				        </template>
 				      </el-table-column> -->
-				
-								<el-table-column prop="is_use" label="完成状态" width="180">
+
+								<el-table-column prop="is_use" label="完成状态" width="80" align="center">
 									<template slot-scope="scope">
-										<span style="margin-left: 17px;" v-if="scope.row.ifblock">{{scope.row.count}}</span>
+										<!-- <span style="margin-left: 17px;" v-if="scope.row.ifblock">{{scope.row.count}}</span> -->
 										<!-- <i class="el-icon-success" style="color:#00A000;font-size:1.5rem;margin-left: 17px;"></i> -->
-										<i class="el-icon-success" style="color:#00A000;font-size:1.5rem;margin-left: 17px;" v-if="scope.row.active_img"></i>
+										<i class="el-icon-success" style="color:#00A000;font-size:1.5rem;" v-if="scope.row.active_img"></i>
 									</template>
 								</el-table-column>
-				
-				
-				
+
+
+
 							</el-table>
-				
-				
+
+
 							<!--       <div style="text-align: right;">
 				      <el-button type="primary" @click="enter">入库</el-button>
 				    </div> -->
-				
-				
-							<div class="block">
-								<el-pagination v-if="tableData.length" @size-change="handleSizeChange" @current-change="handleCurrentChange" :page-size="pagesize" layout="prev, pager, next, jumper"
-								 :total="tableData.length">
+
+
+							<div class="block" style="margin-top: 10px;">
+								<el-pagination v-if="tableData.length" @size-change="handleSizeChange" @current-change="handleCurrentChange"
+								 :page-size="pagesize" layout="prev, pager, next, jumper" :total="tableData.length">
 								</el-pagination>
 							</div>
 						</div>
 					</div>
+
+					<!-- Picture editing popover -->
+					<cropperPhoto ref="openCamera" v-bind:centerDialogVisible="cropperPhoto" @change="changeClose"></cropperPhoto>
+
 				</div>
 			</el-main>
 		</el-container>
 	</el-container>
-	
+
 </template>
 
 <script>
@@ -114,9 +118,14 @@
 	import Left from '@/components/Left.vue'
 	import Head from '@/components/Head.vue'
 	import Qs from 'qs'
+	import cropperPhoto from './cropperPhoto/CropperPhoto.vue'
 	export default {
 		name: 'tray_enter',
-		components: { Left, Head },
+		components: {
+			Left,
+			Head,
+			cropperPhoto
+		},
 		data() {
 			return {
 				barcode_val: '',
@@ -131,8 +140,12 @@
 				id_: '',
 				tray_status: false,
 				is_block: false,
-				thisObject: ''
-				// ifblock:true
+				thisObject: '',
+				// ifblock:true,
+				cropperPhoto: {
+					dialog: false,
+					record_id: ''
+				},
 			}
 		},
 		computed: {
@@ -155,7 +168,15 @@
 			localStorage.removeItem('tableData');
 			localStorage.removeItem('datas_');
 		},
+		watch: {
+			true_Arr() {
+				this.cropperPhone()
+			}
+		},
 		methods: {
+			changeClose(param) {
+				this.cropperPhoto.dialog = param;
+			},
 			barcode_Data() {
 				let that = this;
 				if (that.barcode_val.length == 8) {
@@ -173,6 +194,7 @@
 							that.barcode_val = '';
 							var datas_ = res.data.data;
 							that.id_ = datas_.id;
+							that.cropperPhoto.record_id = datas_.record_id;
 							var list = res.data.data.detail;
 
 							for (var i = 0; i < list.length; i++) {
@@ -224,9 +246,7 @@
 									type: 'warning'
 								}).then(() => {
 									that.tableData = list;
-								}).catch(() => {
-
-								});
+								}).catch(() => {});
 							}
 
 
@@ -328,29 +348,29 @@
 				}
 
 			},
-			// modificationStatus(){//修改状态
-			//   let that = this;
-			//   var ruleform=JSON.parse(localStorage.getItem("ruleForm"))
-			//   var token=that.$store.state.token==""?ruleform.token:that.$store.state.token;
-			//   var url=that.$store.state.url;
-			//   console.log(token);
-			//     that.axios.get(url+'/api/v1/tray/status',{
-			//       headers: {
-			//          'content-type': 'application/x-www-form-urlencoded',
-			//          "token":token
-			//         },
-			//       params:{
-			//        id : that.id_,
-			//        status: 2
-			//       }
-			//     })
-			//     .then(function (res) {
-			//       console.log(res);
-			//     })
-			//     .catch(function (error) {
-			//       console.log(error);
-			//     });
-			// },
+			/* modificationStatus(){//修改状态
+			  let that = this;
+			  var ruleform=JSON.parse(localStorage.getItem("ruleForm"))
+			  var token=that.$store.state.token==""?ruleform.token:that.$store.state.token;
+			  var url=that.$store.state.url;
+			  console.log(token);
+			    that.axios.get(url+'/api/v1/tray/status',{
+			      headers: {
+			         'content-type': 'application/x-www-form-urlencoded',
+			         "token":token
+			        },
+			      params:{
+			       id : that.id_,
+			       status: 2
+			      }
+			    })
+			    .then(function (res) {
+			      console.log(res);
+			    })
+			    .catch(function (error) {
+			      console.log(error);
+			    });
+			}, */
 			handleSizeChange(psize) {
 				this.pagesize = psize;
 			},
@@ -399,31 +419,31 @@
 				parts__arr.parts_id = parts_id;
 				parts__arr.type = type;
 				parts_arr.push(parts__arr);
-				// for(var i=0;i<that.tableData.length;i++){
-				//  var product_id=that.tableData[i].product_id;
-				//  var product_name=that.tableData[i].product_name;
-				//  var number=that.tableData[i].use_number;
-				//  var type=that.tableData[i].type;
-				//  console.log(that.generate_);
-				//  var parts_id;
-				//  if(type==1){
-				//    parts_id=0;
-				//  }else{
-				//    parts_id=product_id;
-				//  }
-				//  console.log(type);
-				//  var parts_arr_=[];
-				//  parts_arr_.product_id=product_id;
-				//  parts_arr_.product_name=product_name;
-				//  parts_arr_.number=number;
-				//  parts_arr_.parts_id=parts_id;
-				//  parts_arr_.type=type;
+				/* for(var i=0;i<that.tableData.length;i++){
+				 var product_id=that.tableData[i].product_id;
+				 var product_name=that.tableData[i].product_name;
+				 var number=that.tableData[i].use_number;
+				 var type=that.tableData[i].type;
+				 console.log(that.generate_);
+				 var parts_id;
+				 if(type==1){
+				   parts_id=0;
+				 }else{
+				   parts_id=product_id;
+				 }
+				 console.log(type);
+				 var parts_arr_=[];
+				 parts_arr_.product_id=product_id;
+				 parts_arr_.product_name=product_name;
+				 parts_arr_.number=number;
+				 parts_arr_.parts_id=parts_id;
+				 parts_arr_.type=type;
 
-				//   console.log(parts_arr_);
-				//   parts_arr.push(parts_arr_);
-				// }
-				// console.log(parts_arr)
-				// console.log(parts_arr,parts_arr_);
+				  console.log(parts_arr_);
+				  parts_arr.push(parts_arr_);
+				}
+				console.log(parts_arr)
+				console.log(parts_arr,parts_arr_); */
 
 				var ids_ = that.id_;
 				let postData = Qs.stringify({
@@ -454,6 +474,25 @@
 
 						console.log(error);
 					});
+
+			},
+			cropperPhone() {
+				var that = this;
+				if (that.tableData.length == that.true_Arr.length) {
+					console.log('tableData', that.tableData)
+					console.log('true_Arr', that.true_Arr)
+					that.$alert('*装盘完成需进行对托盘拍照', '提示', {
+						confirmButtonText: '拍照',
+						showClose: false,
+						callback: action => {
+							that.cropperPhoto.dialog = true;
+							setTimeout(() => {
+								that.$refs.openCamera.openCameraBtn();
+							}, 100)
+
+						}
+					});
+				}
 
 			},
 

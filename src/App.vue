@@ -16,21 +16,30 @@
 		},
 		data() {
 			return {
-				lastTime: new Date().getTime(),
-				currentTime: new Date().getTime(),
+				/* 判断登录超时的数据 */
+				setIntervalKey: '',	//计时器key
+				lastTime: new Date().getTime(),	//当前操作的记录时间
+				currentTime: new Date().getTime(),	//当前时间
 				timeOut: 60 * 60 * 24 * 1000, // 一天的时间戳
+				/* 判断登录超时的数据结束 */
 			}
 		},
 		computed: {
 			...mapGetters({
-				user: "getUser"
+				user: "getUser",
+				token: "getToken"
 			}),
 			
 		},
 		created() {
-			// window.setInterval(this.checkTimeout, 5000);
+			if (this.user && this.token) {
+				console.log('执行')
+				this.setIntervalKey = window.setInterval(this.checkTimeout, 5000);	//间隔规定时间判断是否超时
+				
+			}
 		},
 		methods: {
+			/* 超时执行 */
 			checkTimeout() {
 				let that = this;
 				that.currentTime = new Date().getTime(); //更新当前时间
@@ -44,14 +53,16 @@
 					});
 					sessionStorage.removeItem("token");
 					sessionStorage.removeItem("user");
+					localStorage.removeItem("ruleFormStat");
+					clearInterval(that.setIntervalKey);	//清除间隔判断超时
 					that.$router.push("/login");
-					location.reload();
 				}
 			},
 
 		},
 		mounted() {
 			var that = this;
+			/* 当前操作记录时间		须使用$nextTick(fn) */
 			that.$nextTick(function() {
 				document.addEventListener('click', function() {
 					localStorage.setItem("lastTime", new Date().getTime());
