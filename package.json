@@ -18,7 +18,7 @@
 		"less-loader": "^5.0.0",
 		"moment": "^2.24.0",
 		"qrcodejs2": "0.0.2",
-		"swiper": "^4.5.1",
+		"swiper": "^6.5.1",
 		"timers": "^0.1.1",
 		"tinymce-vue": "^1.0.0",
 		"view-design": "^4.1.3",
